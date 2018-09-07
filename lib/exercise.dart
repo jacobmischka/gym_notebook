@@ -17,7 +17,7 @@ class ExerciseWeight {
   final int weight;
   final WeightUnit units;
 
-  ExerciseWeight(this.weight, [this.units = WeightUnit.kg]);
+  ExerciseWeight(this.weight, [this.units = WeightUnit.lbs]);
 }
 
 enum WeightUnit { lbs, kg }
@@ -27,20 +27,11 @@ class ExerciseWidget extends StatefulWidget {
   ExerciseWidget(this.exercise);
 
   @override
-  ExerciseWidgetState createState() => new ExerciseWidgetState(exercise);
+  ExerciseWidgetState createState() => ExerciseWidgetState();
 }
 
 class ExerciseWidgetState extends State<ExerciseWidget> {
-  final TextEditingController _nameController;
-
-  ExerciseWidgetState(Exercise exercise)
-      : _nameController = TextEditingController(text: exercise.name);
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -48,19 +39,22 @@ class ExerciseWidgetState extends State<ExerciseWidget> {
       appBar: AppBar(
         title: const Text('Exercise'),
       ),
-      body: Column(
-        children: <Widget>[
-          Container(
-            padding: EdgeInsets.all(12.0),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: 'Exercise name',
-                hintText: 'Bench press',
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: <Widget>[
+            Container(
+              padding: EdgeInsets.all(12.0),
+              child: TextFormField(
+                initialValue: widget.exercise.name,
+                decoration: InputDecoration(
+                  labelText: 'Exercise name',
+                  hintText: 'Bench press',
+                ),
               ),
-              controller: _nameController,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
