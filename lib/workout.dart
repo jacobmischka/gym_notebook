@@ -1,24 +1,76 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'exercise.dart';
+import 'table_defs.dart';
 
 class Workout {
-  final List<WorkoutEntry> entries;
-  final DateTime date;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String notes;
+  int id;
+  List<WorkoutEntry> entries;
+  DateTime date;
+  DateTime startTime;
+  DateTime endTime;
+  String notes;
 
-  Workout(this.date, this.entries, [this.notes = '']);
+  Workout({this.date, this.entries, this.notes = ''});
 }
 
 class WorkoutEntry {
-  final Exercise exercise;
-  final List<ExerciseSet> sets;
-  final String notes;
+  int id;
+  int workoutId;
+  Exercise exercise;
+  List<ExerciseSet> sets;
+  String notes;
 
-  WorkoutEntry(this.exercise, this.sets, [this.notes = '']);
+  WorkoutEntry(
+      {this.id, this.workoutId, this.exercise, this.sets, this.notes = ''});
+
+  Map<String, dynamic> toMap() {
+    return {
+      columnId: id,
+      columnWorkoutId: workoutId,
+      columnExerciseId: exercise.id,
+      columnNotes: notes
+    };
+  }
+
+  WorkoutEntry.fromMap(Map<String, dynamic> map) {
+    id = map[columnId];
+    workoutId = map[columnWorkoutId];
+    // Hm unsure
+    // exerciseId = map[columnExerciseId];
+    notes = map[columnNotes];
+  }
+}
+
+class WorkoutEntryProvider {
+  Database db;
+  Future open(String path) async {
+    db = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
+      await db.execute('''
+          create table $tableExercises (
+            $columnId integer primary key autoincrement,
+            $columnWorkoutId integer,
+            $columnExerciseId integer,
+            $columnNotes text
+          );
+      ''');
+    });
+  }
+
+  Future<WorkoutEntry> insert(WorkoutEntry workoutEntry) async {
+    workoutEntry.id =
+        await db.insert(tableWorkoutEntries, workoutEntry.toMap());
+    return workoutEntry;
+  }
+
+  Future<WorkoutEntry> fetch(int id) async {
+    // TODO
+  }
 }
 
 class WorkoutEntryWidget extends StatefulWidget {
