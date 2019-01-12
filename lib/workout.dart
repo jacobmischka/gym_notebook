@@ -10,7 +10,8 @@ class Workout {
   final DateTime endTime;
   final String notes;
 
-  Workout(this.date, this.entries, [this.notes = '']);
+  Workout(this.date, this.entries, this.startTime, this.endTime,
+      [this.notes = '']);
 }
 
 class WorkoutEntry {

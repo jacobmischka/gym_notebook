@@ -11,6 +11,8 @@ dependencies:
 
   intl: ^0.15.7
 
+  firebase_database: ^1.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
