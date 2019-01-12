@@ -15,7 +15,7 @@ class Workout {
   DateTime endTime;
   String notes;
 
-  Workout({this.date, this.entries, this.notes = ''});
+  Workout({this.date, this.entries, this.startTime, this.endTime, this.notes = ''});
 }
 
 class WorkoutEntry {
@@ -56,6 +56,9 @@ class WorkoutEntryProvider {
             $columnId integer primary key autoincrement,
             $columnWorkoutId integer,
             $columnExerciseId integer,
+            $columnDate date,
+            $columnStartTime date,
+            $columnEndTime date,
             $columnNotes text
           );
       ''');
@@ -69,8 +72,45 @@ class WorkoutEntryProvider {
   }
 
   Future<WorkoutEntry> fetch(int id) async {
-    // TODO
+    List<Map> maps = await db.query(
+        tableWorkoutEntries,
+        columns: [
+          columnId,
+          columnWorkoutId,
+          columnExerciseId,
+          columnDate,
+          columnStartTime,
+          columnEndTime,
+          columnNotes,
+        ],
+        where: '$columnId = ?',
+        whereArgs: [id],
+      );
+
+    if (maps.length > 0) {
+      return WorkoutEntry.fromMap(maps.first);
+    }
+    return null;
   }
+
+  Future<int> delete(int id) async {
+    return await db.delete(
+        tableWorkoutEntries,
+        where: '$columnId = ?',
+        whereArgs: [id],
+      );
+  }
+
+  Future<int> update(WorkoutEntry workoutEntry) async {
+    return await db.update(
+        tableWorkoutEntries,
+        workoutEntry.toMap(),
+        where: '$columnId = ?',
+        whereArgs: [workoutEntry.id]
+      );
+  }
+
+  Future close() async => db.close();
 }
 
 class WorkoutEntryWidget extends StatefulWidget {

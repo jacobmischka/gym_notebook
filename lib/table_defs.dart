@@ -12,6 +12,9 @@ final String columnUnits = 'units';
 final String columnReps = 'reps';
 final String columnWorkoutId = 'workout_id';
 final String columnExerciseId = 'exercise_id';
+final String columnDate = 'date';
+final String columnStartTime = 'start_time';
+final String columnEndTime = 'end_time';
 
 abstract class GymLogProvider<T> {
   Future open(String path);
