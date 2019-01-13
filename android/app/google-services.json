@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "543633183977",
+    "firebase_url": "https://gym-notebook.firebaseio.com",
+    "project_id": "gym-notebook",
+    "storage_bucket": "gym-notebook.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543633183977:android:2d6be5981c34378b",
+        "android_client_info": {
+          "package_name": "me.mischka.gymnotebook"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "543633183977-p2engcmc385ghangbiuja37ghdm3tp5g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeA_LxpKMKITkPwbTEE7dyS7uctcN4p60"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
