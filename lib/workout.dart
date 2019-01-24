@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,7 +10,7 @@ class Workout {
   String id;
   DocumentReference reference;
 
-  List<WorkoutEntry> entries = [];
+  FutureOr<List<WorkoutEntry>> entries = [];
   DateTime date;
   DateTime startTime;
   DateTime endTime;
@@ -17,7 +19,7 @@ class Workout {
   Workout(this.date, this.entries, [this.startTime, this.endTime, this.notes]);
 
   Workout.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
-    fetchEntries(reference.collection('entries'));
+    entries = fetchEntries(reference.collection('entries'));
     date = map['date']?.toDate();
     startTime = map['startTime']?.toDate();
     endTime = map['endTime']?.toDate();
@@ -25,12 +27,25 @@ class Workout {
   }
 
   Workout.fromSnapshot(DocumentSnapshot snapshot)
-      : this.fromMap(snapshot.data, id: snapshot.documentID, reference: snapshot.reference);
+      : this.fromMap(snapshot.data,
+            id: snapshot.documentID, reference: snapshot.reference);
 
-  void fetchEntries(CollectionReference reference) async {
+  Future<List<WorkoutEntry>> fetchEntries(CollectionReference reference) async {
     QuerySnapshot snapshot = await reference.getDocuments();
-    this.entries = snapshot.documents.map((DocumentSnapshot snapshot) =>
-        WorkoutEntry.fromSnapshot(snapshot)).toList();
+    return snapshot.documents
+        .map((DocumentSnapshot snapshot) => WorkoutEntry.fromSnapshot(snapshot))
+        .toList();
+  }
+
+  Future<void> save() async {
+    reference.updateData(<String, dynamic>{
+      'date': date,
+      'startTime': startTime,
+      'endTime': endTime,
+      'notes': notes
+    });
+
+    // entries.forEach((entry) => entry.save());
   }
 }
 
@@ -38,59 +53,119 @@ class WorkoutEntry {
   String id;
   DocumentReference reference;
 
-  Exercise exercise;
+  FutureOr<Exercise> exercise;
   List<ExerciseSet> sets;
   String notes;
 
   WorkoutEntry(this.exercise, this.sets, [this.notes]);
 
   WorkoutEntry.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
+    exercise = fetchExercise(map['exercise']);
+    sets = map['sets']
+        .map((exerciseSetMap) {
+          WeightUnit units = exerciseSetMap['weight']['units'] == 'kg'
+              ? WeightUnit.kg
+              : WeightUnit.lbs;
+          ExerciseWeight weight =
+              ExerciseWeight(exerciseSetMap['weight']['weight'], units);
 
-    fetchExercise(map['exercise']);
-    sets = map['sets'].map((exerciseSetMap) {
-      WeightUnit units = exerciseSetMap['weight']['units'] == 'kg' ? WeightUnit.kg : WeightUnit.lbs;
-      ExerciseWeight weight = ExerciseWeight(exerciseSetMap['weight']['weight'], units);
-
-      return ExerciseSet(weight, exerciseSetMap['reps']);
-    }).toList();
-    // (Map<String, dynamic> map) {
+          return ExerciseSet(weight, exerciseSetMap['reps']);
+        })
+        .toList()
+        .cast<ExerciseSet>();
     notes = map['notes'];
   }
 
   WorkoutEntry.fromSnapshot(DocumentSnapshot snapshot)
-      : this.fromMap(snapshot.data, id: snapshot.documentID, reference: snapshot.reference);
+      : this.fromMap(snapshot.data,
+            id: snapshot.documentID, reference: snapshot.reference);
 
-  Future<void> fetchExercise(DocumentReference reference) async {
+  Future<Exercise> fetchExercise(DocumentReference reference) async {
     DocumentSnapshot snapshot = await reference.get();
-    this.exercise = Exercise(snapshot['name']);
+    return Exercise(snapshot['name']);
+  }
+
+  Widget exerciseName() {
+    return FutureBuilder<Exercise>(
+        future: exercise,
+        builder: (BuildContext context, AsyncSnapshot<Exercise> snapshot) {
+          if (!snapshot.hasData) return const Text('...');
+
+          return Text(snapshot.data.name);
+        });
+  }
+
+  Future<void> save() async {
+    reference.updateData(<String, dynamic>{
+      'sets': sets.map((exerciseSet) => exerciseSet.toMap()),
+      'notes': notes
+    });
   }
 }
 
 class WorkoutWidget extends StatefulWidget {
-  final Workout _workout;
-  WorkoutWidget(this._workout);
+  final DocumentSnapshot _workoutSnapshot;
+  WorkoutWidget(this._workoutSnapshot);
 
   @override
   WorkoutWidgetState createState() => WorkoutWidgetState();
 }
 
 class WorkoutWidgetState extends State<WorkoutWidget> {
+  final _formKey = GlobalKey<FormState>();
+  Workout _workout;
+
+  WorkoutWidgetState() {
+    _workout = Workout.fromSnapshot(widget._workoutSnapshot);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text(DateFormat("EEEE, MMMM d").format(widget._workout.date))),
-        body: ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: widget._workout.entries.length,
-            itemBuilder: (context, i) => _buildEntry(context, widget._workout.entries[i])
-        )
+      appBar:
+          AppBar(title: Text(DateFormat("EEEE, MMMM d").format(_workout.date))),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: <Widget>[
+            Flexible(
+              child: FutureBuilder<List<WorkoutEntry>>(
+                  future: _workout.entries,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<WorkoutEntry>> snapshot) {
+                    if (!snapshot.hasData) return const Text('Loading...');
+
+                    return ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (context, i) =>
+                            _buildEntry(context, snapshot.data[i]));
+                  }),
+            ),
+            TextFormField(
+              initialValue: _workout.notes,
+              decoration: InputDecoration(
+                labelText: 'Notes',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildEntry(BuildContext context, WorkoutEntry entry) {
+  Widget _buildEntry(BuildContext context, WorkoutEntry workoutEntry) {
     return ListTile(
-        title: Text(entry.exercise?.name)
-    );
+        title: workoutEntry.exerciseName(),
+        subtitle: Text(workoutEntry.sets
+            .map((set) => '${set.weight.weight}x${set.reps}')
+            .join(', ')),
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => WorkoutEntryWidget(workoutEntry)));
+        });
   }
 }
 
@@ -104,93 +179,74 @@ class WorkoutEntryWidget extends StatefulWidget {
 
 class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
   final _formKey = GlobalKey<FormState>();
+  WorkoutEntry _workoutEntry;
+  WorkoutEntryWidgetState() {
+    _workoutEntry = widget._workoutEntry;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget._workoutEntry.exercise?.name)),
+      appBar: AppBar(title: _workoutEntry.exerciseName()),
       body: Form(
           key: _formKey,
           child: Column(
             children: <Widget>[
-              ListView.builder(
+              Flexible(
+                  child: ListView.builder(
                 padding: const EdgeInsets.all(16.0),
-                itemCount: widget._workoutEntry.sets.length,
-                itemBuilder: (context, i) =>
-                    _buildEntry(widget._workoutEntry.sets[i]),
-              ),
+                itemCount: _workoutEntry.sets.length,
+                itemBuilder: (context, i) => _buildSet(_workoutEntry.sets, i),
+              )),
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Notes',
-                ),
-              ),
+                  initialValue: widget._workoutEntry.notes,
+                  decoration: InputDecoration(
+                    labelText: 'Notes',
+                  ),
+                  onSaved: (String value) {
+                    _workoutEntry.notes = value;
+                  }),
             ],
-          ),
-          onChanged: _handleFormChange),
+          )),
+      floatingActionButton: FloatingActionButton(
+          onPressed: _handleSave,
+          tooltip: 'Save workout entry',
+          child: Icon(Icons.save)),
     );
   }
 
-  Widget _buildEntry(ExerciseSet exerciseSet) {
+  Widget _buildSet(List<ExerciseSet> exerciseSets, int index) {
+    var exerciseSet = exerciseSets[index];
+
     return Row(
       children: <Widget>[
-        TextFormField(
-            decoration: InputDecoration(
-              labelText: 'Weight',
-            ),
-            keyboardType: TextInputType.number),
-        TextFormField(
-            decoration: InputDecoration(labelText: 'Reps'),
-            keyboardType: TextInputType.number),
+        Expanded(
+          child: TextFormField(
+              initialValue: exerciseSet.weight.weight.toString(),
+              decoration: InputDecoration(
+                labelText: 'Weight',
+              ),
+              keyboardType: TextInputType.number,
+              onSaved: (String value) {
+                exerciseSet.weight.weight = int.parse(value);
+              }),
+        ),
+        Expanded(
+          child: TextFormField(
+              initialValue: exerciseSet.reps.toString(),
+              decoration: InputDecoration(labelText: 'Reps'),
+              keyboardType: TextInputType.number,
+              onSaved: (String value) {
+                exerciseSet.reps = int.parse(value);
+              }),
+        ),
       ],
     );
   }
 
-  void _handleFormChange() {}
-}
-
-class WorkoutSessionWidget extends StatefulWidget {
-  final Workout _workout;
-  WorkoutSessionWidget(this._workout);
-
-  @override
-  WorkoutSessionWidgetState createState() => WorkoutSessionWidgetState();
-}
-
-class WorkoutSessionWidgetState extends State<WorkoutSessionWidget> {
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: Text(DateFormat("EEEE, MMMM d").format(widget._workout.date))),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: <Widget>[
-            ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: widget._workout.entries.length,
-              itemBuilder: (context, i) =>
-                  _buildEntry(widget._workout.entries[i]),
-            ),
-            TextFormField(
-              initialValue: widget._workout.notes,
-              decoration: InputDecoration(
-                labelText: 'Notes',
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEntry(WorkoutEntry logEntry) {
-    return ListTile(
-        title: Text(logEntry.exercise.name),
-        subtitle: Text(logEntry.sets
-            .map((set) => '${set.weight.weight}x${set.reps}')
-            .join(', ')));
+  void _handleSave() {
+    var form = _formKey.currentState;
+    form.save();
+    _workoutEntry.save();
   }
 }

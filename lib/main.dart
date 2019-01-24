@@ -16,11 +16,10 @@ Future<void> main() async {
   final FirebaseApp app = await FirebaseApp.configure(
     name: 'gym-notebook',
     options: const FirebaseOptions(
-      googleAppID: '1:543633183977:android:2d6be5981c34378b',
-      gcmSenderID: '543633183977',
-      apiKey: 'AIzaSyBeA_LxpKMKITkPwbTEE7dyS7uctcN4p60',
-      projectID: 'gym-notebook'
-    ),
+        googleAppID: '1:543633183977:android:2d6be5981c34378b',
+        gcmSenderID: '543633183977',
+        apiKey: 'AIzaSyBeA_LxpKMKITkPwbTEE7dyS7uctcN4p60',
+        projectID: 'gym-notebook'),
   );
   final Firestore firestore = Firestore(app: app);
   await firestore.settings(timestampsInSnapshotsEnabled: true);
@@ -40,12 +39,11 @@ Future<FirebaseUser> handleGoogleSignin() async {
   GoogleSignInAccount googleUser = await _googleSignIn.signIn();
   GoogleSignInAuthentication googleAuth = await googleUser.authentication;
   FirebaseUser user = await _auth.signInWithGoogle(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+    accessToken: googleAuth.accessToken,
+    idToken: googleAuth.idToken,
   );
   return user;
 }
-
 
 class HomeWidget extends StatelessWidget {
   final FirebaseApp app;
@@ -59,10 +57,10 @@ class HomeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Workouts'),
-        ),
-        body: WorkoutList(firestore: firestore),
+      appBar: AppBar(
+        title: const Text('Workouts'),
+      ),
+      body: WorkoutList(firestore: firestore),
     );
   }
 }
@@ -80,23 +78,21 @@ class WorkoutList extends StatelessWidget {
           if (!snapshot.hasData) return const Text('Loading...');
 
           return ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: snapshot.data.documents.length,
-              itemBuilder: (context, i) => _buildWorkout(context, snapshot.data.documents[i]),
+            padding: const EdgeInsets.all(16.0),
+            itemCount: snapshot.data.documents.length,
+            itemBuilder: (context, i) =>
+                _buildWorkout(context, snapshot.data.documents[i]),
           );
-        }
-    );
+        });
   }
 
   Widget _buildWorkout(BuildContext context, DocumentSnapshot snapshot) {
     return ListTile(
-        title: Text(DateFormat("EEEE, MMMM d").format(snapshot['date']?.toDate())),
+        title:
+            Text(DateFormat("EEEE, MMMM d").format(snapshot['date']?.toDate())),
         onTap: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => WorkoutWidget(Workout.fromSnapshot(snapshot)))
-          );
-        }
-      );
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => WorkoutWidget(snapshot)));
+        });
   }
 }

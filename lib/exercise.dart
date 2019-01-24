@@ -1,21 +1,46 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Exercise {
-  final String name;
+  String id;
+  DocumentReference reference;
+
+  String name;
 
   Exercise([this.name = '']);
+
+  Exercise.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
+    name = map['name'];
+  }
+
+  Exercise.fromSnapshot(DocumentSnapshot snapshot)
+      : this.fromMap(snapshot.data,
+            id: snapshot.documentID, reference: snapshot.reference);
+
+  Future<void> save() async {
+    reference.updateData(<String, dynamic>{'name': name});
+  }
 }
 
 class ExerciseSet {
-  final ExerciseWeight weight;
-  final int reps;
+  ExerciseWeight weight;
+  int reps;
 
   ExerciseSet(this.weight, this.reps);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'weight': {'weight': weight.weight, 'units': weight.units.toString()},
+      'reps': reps
+    };
+  }
 }
 
 class ExerciseWeight {
-  final int weight;
-  final WeightUnit units;
+  int weight;
+  WeightUnit units;
 
   ExerciseWeight(this.weight, [this.units = WeightUnit.lbs]);
 }
@@ -23,8 +48,8 @@ class ExerciseWeight {
 enum WeightUnit { lbs, kg }
 
 class ExerciseWidget extends StatefulWidget {
-  final Exercise exercise;
-  ExerciseWidget(this.exercise);
+  final DocumentSnapshot _exerciseSnapshot;
+  ExerciseWidget(this._exerciseSnapshot);
 
   @override
   ExerciseWidgetState createState() => ExerciseWidgetState();
@@ -32,6 +57,11 @@ class ExerciseWidget extends StatefulWidget {
 
 class ExerciseWidgetState extends State<ExerciseWidget> {
   final _formKey = GlobalKey<FormState>();
+  Exercise _exercise;
+
+  ExerciseWidgetState() {
+    exercise = Exercise.fromSnapshot(widget._exerciseSnapshot);
+  }
 
   @override
   Widget build(BuildContext context) {
