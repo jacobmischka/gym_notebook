@@ -60,7 +60,7 @@ class ExerciseWidgetState extends State<ExerciseWidget> {
   Exercise _exercise;
 
   ExerciseWidgetState() {
-    exercise = Exercise.fromSnapshot(widget._exerciseSnapshot);
+    _exercise = Exercise.fromSnapshot(widget._exerciseSnapshot);
   }
 
   @override
@@ -76,7 +76,7 @@ class ExerciseWidgetState extends State<ExerciseWidget> {
             Container(
               padding: EdgeInsets.all(12.0),
               child: TextFormField(
-                initialValue: widget.exercise.name,
+                initialValue: _exercise.name,
                 decoration: InputDecoration(
                   labelText: 'Exercise name',
                   hintText: 'Bench press',
