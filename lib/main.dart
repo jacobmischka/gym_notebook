@@ -23,7 +23,7 @@ Future<void> main() async {
         projectID: 'gym-notebook'),
   );
   final Firestore firestore = Firestore(app: app);
-  // await firestore.settings(timestampsInSnapshotsEnabled: true);
+  await firestore.settings(timestampsInSnapshotsEnabled: true);
 
   final FirebaseUser user = await _auth.signInAnonymously();
 
@@ -32,7 +32,7 @@ Future<void> main() async {
     theme: ThemeData(
       primarySwatch: Colors.orange,
     ),
-    home: HomeWidget(app: app, user: user),
+    home: HomeWidget(app: app, user: user, firestore: firestore),
   ));
 }
 
@@ -49,10 +49,11 @@ Future<FirebaseUser> handleGoogleSignin() async {
 class HomeWidget extends StatelessWidget {
   final FirebaseApp app;
   final FirebaseUser user;
+  final Firestore firestore;
 
-  HomeWidget({this.app, this.user});
+  HomeWidget({this.app, this.user, this.firestore});
 
-  CollectionReference get workouts => Firestore.instance.collection('workouts');
+  CollectionReference get workouts => firestore.collection('workouts');
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,7 @@ class HomeWidget extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Workouts'),
         ),
-        body: WorkoutList(),
+        body: WorkoutList(workouts),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
             DateTime date = await showDatePicker(
@@ -68,22 +69,22 @@ class HomeWidget extends StatelessWidget {
                 initialDate: DateTime.now(),
                 firstDate: DateTime.fromMicrosecondsSinceEpoch(0),
                 lastDate: DateTime.utc(3000));
+            await Workout.create(date);
           },
           tooltip: 'Add workout',
           child: Icon(Icons.add),
         ));
   }
-
-  Future<void> _handleAdd() async {
-    DateTime date = await showDatePicker();
-  }
 }
 
 class WorkoutList extends StatelessWidget {
+  final CollectionReference workouts;
+  WorkoutList(this.workouts);
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-        stream: Firestore.instance.collection('workouts').snapshots(),
+        stream: workouts.snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) return const Text('Loading...');
 
@@ -98,7 +99,8 @@ class WorkoutList extends StatelessWidget {
 
   Widget _buildWorkout(BuildContext context, DocumentSnapshot snapshot) {
     return ListTile(
-        title: Text(DateFormat("EEEE, MMMM d").format(snapshot['date'])),
+        title:
+            Text(DateFormat("EEEE, MMMM d").format(snapshot['date']?.toDate())),
         onTap: () {
           Workout workout = Workout.fromSnapshot(snapshot);
           Navigator.push(context,

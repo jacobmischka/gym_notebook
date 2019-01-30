@@ -72,6 +72,33 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
                 onPressed: () {
                   _addEntry(context);
                 }),
+            FlatButton(
+                child: Text(_workout.startTime == null
+                    ? 'Start time'
+                    : _workout.startTime.format(context)),
+                onPressed: () async {
+                  var startTime = await showTimePicker(
+                      context: context,
+                      initialTime: _workout.startTime ?? TimeOfDay.now());
+
+                  if (startTime != null) {
+                    _workout.startTime = startTime;
+                    setState(() {});
+                  }
+                }),
+            FlatButton(
+                child: Text(_workout.endTime == null
+                    ? 'End time'
+                    : _workout.endTime.format(context)),
+                onPressed: () async {
+                  var endTime = await showTimePicker(
+                      context: context,
+                      initialTime: _workout.endTime ?? TimeOfDay.now());
+                  if (endTime != null) {
+                    _workout.endTime = endTime;
+                    setState(() {});
+                  }
+                }),
             TextFormField(
               initialValue: _workout.notes,
               decoration: InputDecoration(

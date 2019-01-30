@@ -10,20 +10,7 @@ class FirestoreService {
   // }
 
   // Future<Workout> createWorkout(DateTime date) {
-  //   final TransactionHandler createTransaction = (Transaction tx) async {
-  //     final DocumentSnapshot ds = await tx.get(Firestore.instance.collection('workouts').document());
-  //
-  //     final Workout workout = new Workout(ds.documentID, date);
-  //     final Map<String, dynamic> data = workout.toMap();
-  //
-  //     await tx.set(ds.reference, data);
-  //
-  //     return data;
-  //   }
-  //
-  //   return Firestore.instance.runTransaction(createTransaction).then((mapData) {
-  //     return
-  //   })
+
   // }
   //
   // Future<Exercise> createExercise() {

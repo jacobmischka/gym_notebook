@@ -11,16 +11,20 @@ class Workout {
 
   List<WorkoutEntry> entries = [];
   DateTime date;
-  DateTime startTime;
-  DateTime endTime;
+  TimeOfDay startTime;
+  TimeOfDay endTime;
   String notes;
 
   Workout(this.date, [this.entries, this.startTime, this.endTime, this.notes]);
 
   Workout.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
-    date = map['date'];
-    startTime = map['startTime'];
-    endTime = map['endTime'];
+    date = map['date']?.toDate();
+    if (map['startTime'] != null) {
+      startTime = TimeOfDay.fromDateTime(map['startTime'].toDate());
+    }
+    if (map['endTime'] != null) {
+      endTime = TimeOfDay.fromDateTime(map['endTime'].toDate());
+    }
     notes = map['notes'];
   }
 
@@ -45,13 +49,30 @@ class Workout {
     }
   }
 
-  Future<void> save() async {
-    await reference.updateData(<String, dynamic>{
+  static Future<Workout> create(DateTime date) async {
+    DocumentReference reference = await Firestore.instance
+        .collection('workouts')
+        .add(<String, dynamic>{'date': date});
+    return Workout.fromSnapshot(await reference.get());
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
       'date': date,
-      'startTime': startTime,
-      'endTime': endTime,
+      'startTime': startTime != null
+          ? DateTime(
+              date.year, date.month, date.day, startTime.hour, startTime.minute)
+          : null,
+      'endTime': endTime != null
+          ? DateTime(
+              date.year, date.month, date.day, endTime.hour, endTime.minute)
+          : null,
       'notes': notes
-    });
+    };
+  }
+
+  Future<void> save() async {
+    await reference.updateData(toMap());
   }
 
   Future<void> addEntry(Exercise exercise) async {
