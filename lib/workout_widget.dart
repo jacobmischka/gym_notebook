@@ -199,11 +199,14 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
   }
 
   Future<void> _addEntry(context) async {
-    Exercise exercise = await Navigator.push(context,
-        MaterialPageRoute(builder: (context) => ExercisePickerWidget()));
+    Exercise exercise = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ExercisePickerWidget(_workout.user)));
 
-    await _workout.addEntry(exercise);
-
-    setState(() {});
+    if (exercise != null) {
+      await _workout.addEntry(exercise);
+      setState(() {});
+    }
   }
 }

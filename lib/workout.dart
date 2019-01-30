@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'exercise.dart';
@@ -9,15 +10,17 @@ class Workout {
   String id;
   DocumentReference reference;
 
-  List<WorkoutEntry> entries = [];
+  String user;
   DateTime date;
   TimeOfDay startTime;
   TimeOfDay endTime;
+  List<WorkoutEntry> entries = [];
   String notes;
 
   Workout(this.date, [this.entries, this.startTime, this.endTime, this.notes]);
 
   Workout.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
+    user = map['user'];
     date = map['date']?.toDate();
     if (map['startTime'] != null) {
       startTime = TimeOfDay.fromDateTime(map['startTime'].toDate());
@@ -65,15 +68,17 @@ class Workout {
     }
   }
 
-  static Future<Workout> create(DateTime date) async {
+  static Future<Workout> create(String userId, DateTime date) async {
+    print(userId);
     DocumentReference reference = await Firestore.instance
         .collection('workouts')
-        .add(<String, dynamic>{'date': date});
+        .add(<String, dynamic>{'user': userId, 'date': date});
     return Workout.fromSnapshot(await reference.get());
   }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
+      'user': user,
       'date': date,
       'startTime': startTime != null
           ? DateTime(

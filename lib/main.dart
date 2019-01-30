@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'workout.dart';
@@ -11,7 +11,6 @@ import 'workout_widget.dart';
 
 import 'utils.dart';
 
-final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 Future<void> main() async {
@@ -23,36 +22,83 @@ Future<void> main() async {
         apiKey: 'AIzaSyBeA_LxpKMKITkPwbTEE7dyS7uctcN4p60',
         projectID: 'gym-notebook'),
   );
+
+  final FirebaseAuth auth = FirebaseAuth.fromApp(app);
+
   final Firestore firestore = Firestore(app: app);
-  await firestore.settings(timestampsInSnapshotsEnabled: true);
-
-  final FirebaseUser user = await _auth.signInAnonymously();
-
+  await firestore.settings(
+      persistenceEnabled: true, timestampsInSnapshotsEnabled: true);
   runApp(new MaterialApp(
     title: 'Gym Notebook',
     theme: ThemeData(
       primarySwatch: Colors.orange,
     ),
-    home: HomeWidget(app: app, user: user, firestore: firestore),
+    home: AppWidget(app, auth, firestore),
   ));
 }
 
-Future<FirebaseUser> handleGoogleSignin() async {
-  GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-  GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-  FirebaseUser user = await _auth.signInWithGoogle(
-    accessToken: googleAuth.accessToken,
-    idToken: googleAuth.idToken,
-  );
-  return user;
+class AppWidget extends StatefulWidget {
+  final FirebaseApp app;
+  final FirebaseAuth auth;
+  final Firestore firestore;
+
+  AppWidget(this.app, this.auth, this.firestore);
+
+  @override
+  AppWidgetState createState() => AppWidgetState();
+}
+
+class AppWidgetState extends State<AppWidget> {
+  FirebaseUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    if (user != null) {
+      return HomeWidget(user: user, firestore: widget.firestore);
+    }
+
+    return Scaffold(
+        body: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Flexible(
+            child: RaisedButton(
+                child: Text('Sign in with Google'),
+                onPressed: () async {
+                  user = await _handleGoogleSignin();
+
+                  DocumentReference userRef =
+                      widget.firestore.document('/users/${user.uid}');
+                  await userRef.setData(<String, dynamic>{
+                    'name': user.displayName,
+                    'email': user.email,
+                  }, merge: true);
+
+                  setState(() {});
+                }))
+      ],
+    ));
+  }
+
+  Future<FirebaseUser> _handleGoogleSignin() async {
+    GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    AuthCredential credential = GoogleAuthProvider.getCredential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    FirebaseUser user = await widget.auth.signInWithCredential(credential);
+
+    return user;
+  }
 }
 
 class HomeWidget extends StatelessWidget {
-  final FirebaseApp app;
   final FirebaseUser user;
   final Firestore firestore;
 
-  HomeWidget({this.app, this.user, this.firestore});
+  HomeWidget({this.user, this.firestore});
 
   CollectionReference get workouts => firestore.collection('workouts');
 
@@ -62,7 +108,7 @@ class HomeWidget extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Workouts'),
         ),
-        body: WorkoutList(workouts),
+        body: WorkoutList(workouts.where('user', isEqualTo: user.uid)),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
             DateTime date = await showDatePicker(
@@ -70,7 +116,10 @@ class HomeWidget extends StatelessWidget {
                 initialDate: DateTime.now(),
                 firstDate: DateTime.fromMicrosecondsSinceEpoch(0),
                 lastDate: DateTime.utc(3000));
-            await Workout.create(date);
+
+            if (date != null) {
+              await Workout.create(user.uid, date);
+            }
           },
           tooltip: 'Add workout',
           child: Icon(Icons.add),
@@ -79,13 +128,13 @@ class HomeWidget extends StatelessWidget {
 }
 
 class WorkoutList extends StatelessWidget {
-  final CollectionReference workouts;
-  WorkoutList(this.workouts);
+  final Query workoutsQuery;
+  WorkoutList(this.workoutsQuery);
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-        stream: workouts.snapshots(),
+        stream: workoutsQuery.snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) return const Text('Loading...');
 

@@ -6,6 +6,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'exercise.dart';
 
 class ExercisePickerWidget extends StatefulWidget {
+  final String userId;
+
+  ExercisePickerWidget(this.userId);
+
   @override
   ExercisePickerWidgetState createState() => ExercisePickerWidgetState();
 }
@@ -57,30 +61,36 @@ class ExercisePickerWidgetState extends State<ExercisePickerWidget> {
         appBar: AppBar(title: Text('Exercise selector')),
         body: Column(
           children: <Widget>[
-            Expanded(
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: TextField(
-                        controller: controller,
-                        onChanged: handleSearchTextChanged,
-                        decoration: InputDecoration(labelText: 'Search')),
-                  ),
-                  Expanded(
-                      child: IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () async {
-                            var reference = await exercisesReference.add(
-                                <String, dynamic>{'name': controller.text});
-                            var exercise =
-                                Exercise.fromSnapshot(await reference.get());
+            Flexible(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextField(
+                          controller: controller,
+                          onChanged: handleSearchTextChanged,
+                          decoration: InputDecoration(labelText: 'Search')),
+                    ),
+                    IconButton(
+                        icon: Icon(Icons.add_box),
+                        onPressed: () async {
+                          var reference = await exercisesReference
+                              .add(<String, dynamic>{
+                            'creator': widget.userId,
+                            'name': controller.text
+                          });
+                          var exercise =
+                              Exercise.fromSnapshot(await reference.get());
 
-                            Navigator.pop(context, exercise);
-                          }))
-                ],
+                          Navigator.pop(context, exercise);
+                        })
+                  ],
+                ),
               ),
             ),
-            Flexible(
+            Expanded(
               child: ListView.builder(
                   itemCount: _filteredExercises.length,
                   itemBuilder: (context, index) {

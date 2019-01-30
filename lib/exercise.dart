@@ -8,19 +8,25 @@ class Exercise {
   DocumentReference reference;
 
   String name;
+  String notes;
 
-  Exercise([this.name = '']);
+  Exercise(this.name);
 
   Exercise.fromMap(Map<String, dynamic> map, {this.id, this.reference}) {
     name = map['name'];
+    notes = map['notes'];
   }
 
   Exercise.fromSnapshot(DocumentSnapshot snapshot)
       : this.fromMap(snapshot.data,
             id: snapshot.documentID, reference: snapshot.reference);
 
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{'name': name, 'notes': notes};
+  }
+
   Future<void> save() async {
-    reference.updateData(<String, dynamic>{'name': name});
+    reference.updateData(toMap());
   }
 }
 
