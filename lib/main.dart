@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -9,6 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'workout.dart';
 import 'workout_widget.dart';
+
+import 'utils.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -88,6 +89,9 @@ class WorkoutList extends StatelessWidget {
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (!snapshot.hasData) return const Text('Loading...');
 
+          snapshot.data.documents
+              .sort((a, b) => b['date'].compareTo(a['date']));
+
           return ListView.builder(
             padding: const EdgeInsets.all(16.0),
             itemCount: snapshot.data.documents.length,
@@ -98,9 +102,20 @@ class WorkoutList extends StatelessWidget {
   }
 
   Widget _buildWorkout(BuildContext context, DocumentSnapshot snapshot) {
+    Widget subtitle;
+    if (snapshot['startTime'] != null || snapshot['endTime'] != null) {
+      String startTime = snapshot['startTime'] != null
+          ? timeFormat.format(snapshot['startTime'].toDate())
+          : '??';
+      String endTime = snapshot['endTime'] != null
+          ? timeFormat.format(snapshot['endTime'].toDate())
+          : '??';
+      subtitle = Text('$startTime – $endTime');
+    }
     return ListTile(
-        title:
-            Text(DateFormat("EEEE, MMMM d").format(snapshot['date']?.toDate())),
+        leading: const Icon(Icons.fitness_center),
+        title: Text(dateFormat.format(snapshot['date']?.toDate())),
+        subtitle: subtitle,
         onTap: () {
           Workout workout = Workout.fromSnapshot(snapshot);
           Navigator.push(context,

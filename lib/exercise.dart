@@ -26,7 +26,7 @@ class Exercise {
 
 class ExerciseSet {
   ExerciseWeight weight;
-  int reps;
+  num reps;
 
   ExerciseSet(this.weight, this.reps);
 
@@ -36,10 +36,19 @@ class ExerciseSet {
       'reps': reps
     };
   }
+
+  ExerciseSet.fromMap(Map<String, dynamic> map) {
+    WeightUnit weightUnit =
+        map['weight']['units'] == 'kg' ? WeightUnit.kg : WeightUnit.lbs;
+    weight = ExerciseWeight(map['weight']['weight'], weightUnit);
+    reps = map['reps'];
+  }
+
+  ExerciseSet.from(ExerciseSet exerciseSet) : this.fromMap(exerciseSet.toMap());
 }
 
 class ExerciseWeight {
-  int weight;
+  num weight;
   WeightUnit units;
 
   ExerciseWeight(this.weight, [this.units = WeightUnit.lbs]);

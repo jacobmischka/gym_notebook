@@ -46,6 +46,22 @@ class Workout {
             return WorkoutEntry.fromSnapshot(snapshot, exercise);
           }).toList()),
           growable: true);
+
+      entries.sort((a, b) {
+        if (a.order != null && b.order != null) {
+          return a.order.compareTo(b.order);
+        }
+
+        if (b.order == null) {
+          return 1;
+        }
+
+        if (a.order == null) {
+          return -1;
+        }
+
+        return 0;
+      });
     }
   }
 
@@ -75,6 +91,10 @@ class Workout {
     await reference.updateData(toMap());
   }
 
+  Future<void> delete() async {
+    await reference.delete();
+  }
+
   Future<void> addEntry(Exercise exercise) async {
     DocumentReference entryReference = await reference
         .collection('entries')
@@ -85,6 +105,21 @@ class Workout {
     });
     var entry = WorkoutEntry.fromSnapshot(await entryReference.get(), exercise);
     entries.add(entry);
+  }
+
+  Future<void> reorderEntry(int oldIndex, int newIndex) {
+    entries.insert(newIndex, entries.removeAt(oldIndex));
+    return orderEntries();
+  }
+
+  Future<void> orderEntries() {
+    List<Future> futures = [];
+    for (var i = 0; i < entries.length; i++) {
+      entries[i].order = i;
+      futures.add(entries[i].save());
+    }
+
+    return Future.wait(futures);
   }
 
   Future<void> removeEntry(WorkoutEntry entry) async {
@@ -100,8 +135,9 @@ class WorkoutEntry {
   Exercise exercise;
   List<ExerciseSet> sets;
   String notes;
+  int order;
 
-  WorkoutEntry(this.exercise, this.sets, [this.notes]);
+  WorkoutEntry(this.exercise, this.sets, [this.notes, this.order]);
 
   WorkoutEntry.fromMap(Map<String, dynamic> map,
       {this.id, this.reference, this.exercise}) {
@@ -118,6 +154,7 @@ class WorkoutEntry {
         .toList()
         .cast<ExerciseSet>();
     notes = map['notes'];
+    order = map['order'];
   }
 
   WorkoutEntry.fromSnapshot(DocumentSnapshot snapshot, Exercise exercise)
@@ -138,7 +175,18 @@ class WorkoutEntry {
   Future<void> save() async {
     reference.updateData(<String, dynamic>{
       'sets': sets.map((exerciseSet) => exerciseSet.toMap()).toList(),
-      'notes': notes
+      'notes': notes,
+      'order': order
     });
+  }
+
+  Future<void> addSet(ExerciseSet exerciseSet) {
+    sets.add(exerciseSet);
+    return save();
+  }
+
+  Future<void> removeSet(ExerciseSet exerciseSet) {
+    sets.remove(exerciseSet);
+    return save();
   }
 }
