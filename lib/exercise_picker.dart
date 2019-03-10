@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'exercise.dart';
@@ -21,7 +22,8 @@ class ExercisePickerWidgetState extends State<ExercisePickerWidget> {
   List<Exercise> _filteredExercises = [];
 
   ExercisePickerWidgetState() {
-    exercisesReference = Firestore.instance.collection('exercises');
+    Firestore firestore = Firestore(app: FirebaseApp.instance);
+    exercisesReference = firestore.collection('exercises');
   }
 
   @override

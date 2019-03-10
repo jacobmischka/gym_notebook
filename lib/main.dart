@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,12 +11,13 @@ import 'workout_widget.dart';
 
 import 'decorations.dart';
 import 'utils.dart';
+import 'constants.dart';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 Future<void> main() async {
   final FirebaseApp app = await FirebaseApp.configure(
-    name: 'gym-notebook',
+    name: APP_NAME,
     options: const FirebaseOptions(
         googleAppID: '1:543633183977:android:2d6be5981c34378b',
         gcmSenderID: '543633183977',
@@ -103,7 +103,6 @@ class AppWidgetState extends State<AppWidget> {
                       'email': user.email,
                     }, merge: true);
                   } catch (e) {
-                    debugger();
                     print(e);
                   } finally {
                     setState(() {

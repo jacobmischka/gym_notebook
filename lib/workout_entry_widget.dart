@@ -6,6 +6,8 @@ import 'exercise.dart';
 import 'utils.dart';
 import 'decorations.dart';
 
+import 'exercise_history_widget.dart';
+
 class WorkoutEntryWidget extends StatefulWidget {
   final WorkoutEntry _workoutEntry;
   WorkoutEntryWidget(this._workoutEntry);
@@ -23,7 +25,18 @@ class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: _workoutEntry.exerciseName()),
+      appBar: AppBar(title: _workoutEntry.exerciseName(), actions: <Widget>[
+        IconButton(
+            icon: Icon(Icons.history),
+            tooltip: 'Workout history',
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          ExerciseHistoryWidget(_workoutEntry.exercise)));
+            })
+      ]),
       body: Form(
         key: _formKey,
         child: Column(

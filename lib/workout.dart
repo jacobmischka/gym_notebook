@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'exercise.dart';
+import 'constants.dart';
 
 class Workout {
   String id;
@@ -37,15 +39,14 @@ class Workout {
 
   Future<void> fetchEntries() async {
     CollectionReference entriesRef = reference.collection('entries');
-    if (entriesRef == null) {
-    } else {
+    if (entriesRef != null) {
       QuerySnapshot snapshot = await entriesRef.getDocuments();
       entries = List.from(
           await Future.wait(
               snapshot.documents.map((DocumentSnapshot snapshot) async {
             DocumentSnapshot exerciseSnapshot =
                 await snapshot.data['exercise'].get();
-            Exercise exercise = Exercise(exerciseSnapshot.data['name']);
+            Exercise exercise = Exercise.fromSnapshot(exerciseSnapshot);
             return WorkoutEntry.fromSnapshot(snapshot, exercise);
           }).toList()),
           growable: true);
@@ -73,8 +74,11 @@ class Workout {
   }
 
   static Future<Workout> create(String userId, DateTime date) async {
-    print(userId);
-    DocumentReference reference = await Firestore.instance
+    Firestore firestore = Firestore(app: await FirebaseApp.appNamed(APP_NAME));
+    await firestore.settings(
+        persistenceEnabled: true, timestampsInSnapshotsEnabled: true);
+
+    DocumentReference reference = await firestore
         .collection('workouts')
         .add(<String, dynamic>{'user': userId, 'date': date});
     return Workout.fromSnapshot(await reference.get());
