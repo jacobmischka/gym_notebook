@@ -60,7 +60,7 @@ class ExerciseWeight {
   ExerciseWeight(this.weight, [this.units = WeightUnit.lbs]);
 }
 
-enum WeightUnit { lbs, kg }
+enum WeightUnit { lbs, kg, plate }
 
 class ExerciseWidget extends StatefulWidget {
   final DocumentSnapshot _exerciseSnapshot;

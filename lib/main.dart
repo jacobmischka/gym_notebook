@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -37,6 +38,13 @@ Future<void> main() async {
   ));
 }
 
+class LoadingWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: CircularProgressIndicator(value: null));
+  }
+}
+
 class AppWidget extends StatefulWidget {
   final FirebaseApp app;
   final FirebaseAuth auth;
@@ -45,14 +53,28 @@ class AppWidget extends StatefulWidget {
   AppWidget(this.app, this.auth, this.firestore);
 
   @override
-  AppWidgetState createState() => AppWidgetState();
+  AppWidgetState createState() => AppWidgetState(auth.currentUser());
 }
 
 class AppWidgetState extends State<AppWidget> {
   FirebaseUser user;
+  bool loading = true;
+
+  AppWidgetState(Future<FirebaseUser> currentUser) {
+    currentUser.then((FirebaseUser currentUser) {
+      setState(() {
+        user = currentUser;
+        loading = false;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return LoadingWidget();
+    }
+
     if (user != null) {
       return HomeWidget(user: user, firestore: widget.firestore);
     }
@@ -62,20 +84,31 @@ class AppWidgetState extends State<AppWidget> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        Flexible(
+        Center(
             child: RaisedButton(
                 child: Text('Sign in with Google'),
                 onPressed: () async {
-                  user = await _handleGoogleSignin();
+                  setState(() {
+                    loading = true;
+                  });
 
-                  DocumentReference userRef =
-                      widget.firestore.document('/users/${user.uid}');
-                  await userRef.setData(<String, dynamic>{
-                    'name': user.displayName,
-                    'email': user.email,
-                  }, merge: true);
+                  try {
+                    user = await _handleGoogleSignin();
 
-                  setState(() {});
+                    DocumentReference userRef =
+                        widget.firestore.document('/users/${user.uid}');
+                    await userRef.setData(<String, dynamic>{
+                      'name': user.displayName,
+                      'email': user.email,
+                    }, merge: true);
+                  } catch (e) {
+                    debugger();
+                    print(e);
+                  } finally {
+                    setState(() {
+                      loading = false;
+                    });
+                  }
                 }))
       ],
     ));

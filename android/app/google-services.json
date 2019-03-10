@@ -15,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "543633183977-ojtq86kl03bt0u4fht2casqocmajo45n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "me.mischka.gymnotebook",
+            "certificate_hash": "77e08bd5dce01413535d0a7d02c183060fe6f2ec"
+          }
+        },
+        {
+          "client_id": "543633183977-7jten52ah2d27t5h2kreac53o1mko7pq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "me.mischka.gymnotebook",
+            "certificate_hash": "e148e0fab8f3eb831a8ce074e60c6c2d4bae651a"
+          }
+        },
+        {
           "client_id": "543633183977-p2engcmc385ghangbiuja37ghdm3tp5g.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,8 +45,13 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "543633183977-p2engcmc385ghangbiuja37ghdm3tp5g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2

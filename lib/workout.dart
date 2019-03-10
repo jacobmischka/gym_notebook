@@ -148,9 +148,16 @@ class WorkoutEntry {
       {this.id, this.reference, this.exercise}) {
     sets = map['sets']
         .map((exerciseSetMap) {
-          WeightUnit units = exerciseSetMap['weight']['units'] == 'kg'
-              ? WeightUnit.kg
-              : WeightUnit.lbs;
+          WeightUnit units = WeightUnit.lbs;
+          switch (exerciseSetMap['weight']['units']) {
+            case 'kg':
+              units = WeightUnit.kg;
+              break;
+            case 'plate':
+              units = WeightUnit.plate;
+              break;
+          }
+
           ExerciseWeight weight =
               ExerciseWeight(exerciseSetMap['weight']['weight'], units);
 

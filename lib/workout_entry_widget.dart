@@ -35,6 +35,7 @@ class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
             )),
             TextFormField(
                 initialValue: _workoutEntry.notes,
+                maxLines: 3,
                 decoration: notesDecoration,
                 onSaved: (String value) {
                   _workoutEntry.notes = value;
@@ -68,12 +69,34 @@ class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
               child: TextFormField(
                   initialValue: nf.format(exerciseSet.weight.weight),
                   decoration: InputDecoration(
-                    labelText: 'Weight (lbs)',
+                    labelText: 'Weight',
                   ),
                   keyboardType: TextInputType.number,
                   onSaved: (String value) {
                     exerciseSet.weight.weight = double.parse(value);
                   }),
+            ),
+            Expanded(
+              child: PopupMenuButton<WeightUnit>(
+                  initialValue: exerciseSet.weight.units,
+                  onSelected: (WeightUnit unit) {
+                    exerciseSet.weight.units = unit;
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<WeightUnit>>[
+                        const PopupMenuItem<WeightUnit>(
+                          value: WeightUnit.lbs,
+                          child: Text('lbs'),
+                        ),
+                        const PopupMenuItem<WeightUnit>(
+                          value: WeightUnit.kg,
+                          child: Text('kg'),
+                        ),
+                        const PopupMenuItem<WeightUnit>(
+                          value: WeightUnit.plate,
+                          child: Text('plate'),
+                        ),
+                      ]),
             ),
             Expanded(
               child: TextFormField(
