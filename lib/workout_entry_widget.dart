@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'workout.dart';
 import 'exercise.dart';
@@ -63,59 +64,54 @@ class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
     var exerciseSet = exerciseSets[index];
 
     return ListTile(
-        title: Row(
-          children: <Widget>[
-            Expanded(
-              child: TextFormField(
-                  initialValue: nf.format(exerciseSet.weight.weight),
-                  decoration: InputDecoration(
-                    labelText: 'Weight',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onSaved: (String value) {
-                    exerciseSet.weight.weight = double.parse(value);
-                  }),
+      title: Row(
+        children: <Widget>[
+          Expanded(
+            child: TextFormField(
+                initialValue: nf.format(exerciseSet.weight.weight),
+                decoration: InputDecoration(
+                  labelText: 'Weight',
+                ),
+                keyboardType: TextInputType.number,
+                onSaved: (String value) {
+                  exerciseSet.weight.weight = double.parse(value);
+                }),
+          ),
+          Expanded(
+            child: PopupMenuButton<WeightUnit>(
+              child: Text(describeEnum(exerciseSet.weight.units)),
+              initialValue: exerciseSet.weight.units,
+              onSelected: (WeightUnit unit) {
+                setState(() {
+                  exerciseSet.weight.units = unit;
+                });
+              },
+              itemBuilder: (BuildContext context) => WeightUnit.values
+                  .map((unit) => PopupMenuItem<WeightUnit>(
+                      value: unit, child: Text(describeEnum(unit))))
+                  .toList(),
             ),
-            Expanded(
-              child: PopupMenuButton<WeightUnit>(
-                  initialValue: exerciseSet.weight.units,
-                  onSelected: (WeightUnit unit) {
-                    exerciseSet.weight.units = unit;
-                  },
-                  itemBuilder: (BuildContext context) =>
-                      <PopupMenuEntry<WeightUnit>>[
-                        const PopupMenuItem<WeightUnit>(
-                          value: WeightUnit.lbs,
-                          child: Text('lbs'),
-                        ),
-                        const PopupMenuItem<WeightUnit>(
-                          value: WeightUnit.kg,
-                          child: Text('kg'),
-                        ),
-                        const PopupMenuItem<WeightUnit>(
-                          value: WeightUnit.plate,
-                          child: Text('plate'),
-                        ),
-                      ]),
-            ),
-            Expanded(
-              child: TextFormField(
-                  initialValue: nf.format(exerciseSet.reps),
-                  decoration: InputDecoration(labelText: 'Reps'),
-                  keyboardType: TextInputType.number,
-                  onSaved: (String value) {
-                    exerciseSet.reps = double.parse(value);
-                  }),
-            ),
-          ],
-        ),
-        trailing: IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              setState(() {
-                _workoutEntry.removeSet(exerciseSet);
-              });
-            }));
+          ),
+          Expanded(
+            child: TextFormField(
+                initialValue: nf.format(exerciseSet.reps),
+                decoration: InputDecoration(labelText: 'Reps'),
+                keyboardType: TextInputType.number,
+                onSaved: (String value) {
+                  exerciseSet.reps = double.parse(value);
+                }),
+          ),
+        ],
+      ),
+      trailing: IconButton(
+          icon: Icon(Icons.delete),
+          tooltip: 'Delete set',
+          onPressed: () {
+            setState(() {
+              _workoutEntry.removeSet(exerciseSet);
+            });
+          }),
+    );
   }
 
   Future<void> _handleSave() async {

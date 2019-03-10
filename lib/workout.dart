@@ -51,15 +51,19 @@ class Workout {
           growable: true);
 
       entries.sort((a, b) {
+        if (a.order == null && b.order == null) {
+          return 0;
+        }
+
         if (a.order != null && b.order != null) {
           return a.order.compareTo(b.order);
         }
 
-        if (b.order == null) {
+        if (a.order == null) {
           return 1;
         }
 
-        if (a.order == null) {
+        if (b.order == null) {
           return -1;
         }
 
@@ -128,8 +132,15 @@ class Workout {
   }
 
   Future<void> removeEntry(WorkoutEntry entry) async {
-    await entry.reference.delete();
     entries.remove(entry);
+
+    try {
+      await entry.reference.delete();
+    } catch (e) {
+      debugPrint('Deleting entry failed');
+      debugPrint(e);
+      entries.add(entry);
+    }
   }
 }
 

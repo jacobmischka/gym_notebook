@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'workout.dart';
 import 'workout_widget.dart';
 
+import 'decorations.dart';
 import 'utils.dart';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -32,7 +33,7 @@ Future<void> main() async {
   runApp(new MaterialApp(
     title: 'Gym Notebook',
     theme: ThemeData(
-      primarySwatch: Colors.orange,
+      primarySwatch: primaryColor,
     ),
     home: AppWidget(app, auth, firestore),
   ));
@@ -169,7 +170,7 @@ class WorkoutList extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
         stream: workoutsQuery.snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (!snapshot.hasData) return const Text('Loading...');
+          if (!snapshot.hasData) return LoadingWidget();
 
           snapshot.data.documents
               .sort((a, b) => b['date'].compareTo(a['date']));

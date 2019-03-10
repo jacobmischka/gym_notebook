@@ -51,8 +51,11 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
         },
         trailing: IconButton(
             icon: Icon(Icons.delete),
+            tooltip: 'Delete entry',
             onPressed: () async {
-              await _workout.removeEntry(workoutEntry);
+              var future = _workout.removeEntry(workoutEntry);
+              setState(() {});
+              await future;
               setState(() {});
             }));
   }

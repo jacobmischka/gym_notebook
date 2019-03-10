@@ -49,8 +49,9 @@ class ExercisePickerWidgetState extends State<ExercisePickerWidget> {
       if (value.length == 0) {
         _filteredExercises = _exercises;
       } else {
-        _filteredExercises =
-            _exercises.where((e) => e.name.contains(value)).toList();
+        _filteredExercises = _exercises
+            .where((e) => e.name.toLowerCase().contains(value.toLowerCase()))
+            .toList();
       }
     });
   }
