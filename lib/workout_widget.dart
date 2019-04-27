@@ -192,7 +192,9 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
     Exercise exercise = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => ExercisePickerWidget(_workout.user)));
+          builder: (context) => ExercisePickerWidget(_workout.user),
+          fullscreenDialog: true,
+        ));
 
     if (exercise != null) {
       await _workout.addEntry(exercise);

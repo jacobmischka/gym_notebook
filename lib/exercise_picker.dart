@@ -60,43 +60,50 @@ class ExercisePickerWidgetState extends State<ExercisePickerWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Exercise selector')),
-      bottomSheet: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: TextField(
-                  controller: controller,
-                  onChanged: handleSearchTextChanged,
-                  decoration: InputDecoration(labelText: 'Search')),
-            ),
-            IconButton(
-                icon: Icon(Icons.add_box),
-                onPressed: () async {
-                  var reference = await exercisesReference
-                      .add(<String, dynamic>{
-                    'creator': widget.userId,
-                    'name': controller.text
-                  });
-                  var exercise = Exercise.fromSnapshot(await reference.get());
+        appBar: AppBar(title: Text('Exercise selector')),
+        body: Column(children: <Widget>[
+          Flexible(
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TextField(
+                        controller: controller,
+                        onChanged: handleSearchTextChanged,
+                        decoration: InputDecoration(labelText: 'Search')),
+                  ),
+                  IconButton(
+                      icon: Icon(Icons.add_box),
+                      onPressed: () async {
+                        var reference = await exercisesReference
+                            .add(<String, dynamic>{
+                          'creator': widget.userId,
+                          'name': controller.text
+                        });
+                        var exercise =
+                            Exercise.fromSnapshot(await reference.get());
 
-                  Navigator.pop(context, exercise);
-                })
-          ],
-        ),
-      ),
-      body: ListView.builder(
-          itemCount: _filteredExercises.length,
-          itemBuilder: (context, index) {
-            var exercise = _filteredExercises[index];
-            return new ListTile(
-              title: Text(exercise.name),
-              onTap: () {
-                Navigator.pop(context, exercise);
-              },
-            );
-          }),
-    );
+                        Navigator.pop(context, exercise);
+                      })
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+                itemCount: _filteredExercises.length,
+                itemBuilder: (context, index) {
+                  var exercise = _filteredExercises[index];
+                  return new ListTile(
+                    title: Text(exercise.name),
+                    onTap: () {
+                      Navigator.pop(context, exercise);
+                    },
+                  );
+                }),
+          ),
+        ]));
   }
 }
