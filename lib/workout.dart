@@ -2,11 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'exercise.dart';
-import 'constants.dart';
+import 'utils.dart';
 
 class Workout {
   String id;
@@ -74,9 +73,7 @@ class Workout {
   }
 
   static Future<Workout> create(String userId, DateTime date) async {
-    Firestore firestore = Firestore(app: await FirebaseApp.appNamed(APP_NAME));
-    await firestore.settings(
-        persistenceEnabled: true, timestampsInSnapshotsEnabled: true);
+    Firestore firestore = await getFirestore();
 
     DocumentReference reference = await firestore
         .collection('workouts')
@@ -116,8 +113,12 @@ class Workout {
       'notes': '',
       'sets': []
     });
+
     var entry = WorkoutEntry.fromSnapshot(await entryReference.get(), exercise);
     entries.add(entry);
+    // Ideally we wouldn't refetch everything here, but just adding to the list didn't seem to be working.
+    // Would like to look into this later but debugging Firebase auth is a pain.
+    return fetchEntries();
   }
 
   Future<void> reorderEntry(int oldIndex, int newIndex) {
@@ -163,18 +164,9 @@ class WorkoutEntry {
       {this.id, this.reference, this.exercise}) {
     sets = map['sets']
         .map((exerciseSetMap) {
-          WeightUnit units = WeightUnit.lbs;
-          switch (exerciseSetMap['weight']['units']) {
-            case 'kg':
-              units = WeightUnit.kg;
-              break;
-            case 'plate':
-              units = WeightUnit.plate;
-              break;
-          }
-
-          ExerciseWeight weight =
-              ExerciseWeight(exerciseSetMap['weight']['weight'], units);
+          ExerciseWeight weight = ExerciseWeight(
+              exerciseSetMap['weight']['weight'],
+              unitsFromString(exerciseSetMap['weight']['units']));
 
           return ExerciseSet(weight, exerciseSetMap['reps']);
         })

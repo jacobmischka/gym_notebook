@@ -87,7 +87,7 @@ class WorkoutEntryWidgetState extends State<WorkoutEntryWidget> {
                 ),
                 keyboardType: TextInputType.number,
                 onSaved: (String value) {
-                  exerciseSet.weight.weight = double.parse(value);
+                  exerciseSet.weight.weight = num.parse(value);
                 }),
           ),
           Expanded(

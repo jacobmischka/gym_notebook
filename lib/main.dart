@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'workout.dart';
 import 'workout_widget.dart';
 
+import 'buttons.dart';
 import 'decorations.dart';
 import 'utils.dart';
 import 'constants.dart';
@@ -194,10 +195,12 @@ class WorkoutList extends StatelessWidget {
           : '??';
       subtitle = Text('$startTime – $endTime');
     }
+    String date = dateFormat.format(snapshot['date']?.toDate());
     return ListTile(
         leading: const Icon(Icons.fitness_center),
-        title: Text(dateFormat.format(snapshot['date']?.toDate())),
+        title: Text(date),
         subtitle: subtitle,
+        trailing: ShowNotesButton(snapshot['notes'], date),
         onTap: () {
           Workout workout = Workout.fromSnapshot(snapshot);
           Navigator.push(context,

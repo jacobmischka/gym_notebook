@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'main.dart';
 import 'exercise.dart';
+import 'buttons.dart';
 import 'workout.dart';
-
 import 'utils.dart';
-import 'constants.dart';
 
 class ExerciseHistoryWidget extends StatefulWidget {
   final Exercise exercise;
@@ -26,7 +24,7 @@ class ExerciseHistoryWidgetState extends State<ExerciseHistoryWidget> {
   bool loading = true;
 
   ExerciseHistoryWidgetState(Exercise exercise) {
-    FirebaseApp.appNamed(APP_NAME).then((app) async {
+    getApp().then((app) async {
       Firestore firestore = Firestore(app: app);
       FirebaseAuth auth = FirebaseAuth.fromApp(app);
       FirebaseUser user = await auth.currentUser();
@@ -41,15 +39,16 @@ class ExerciseHistoryWidgetState extends State<ExerciseHistoryWidget> {
       }).toList();
 
       await Future.wait(allWorkouts.map((workout) => workout.fetchEntries()));
-      workouts = allWorkouts
-          .where((workout) => workout.entries.any((WorkoutEntry entry) {
-                return entry.exercise.id == exercise.id;
-              }))
-          .toList();
-
-      workouts.sort((a, b) => b.date.compareTo(a.date));
 
       setState(() {
+        workouts = allWorkouts
+            .where((workout) => workout.entries.any((WorkoutEntry entry) {
+                  return entry.exercise.id == exercise.id;
+                }))
+            .toList();
+
+        workouts.sort((a, b) => b.date.compareTo(a.date));
+
         loading = false;
       });
     });
@@ -76,6 +75,9 @@ class ExerciseHistoryWidgetState extends State<ExerciseHistoryWidget> {
             .map((set) =>
                 '${nf.format(set.weight.weight)}x${nf.format(set.reps)}')
             .join(', ')),
-        subtitle: Text(dateFormat.format(workout.date)));
+        subtitle: Text(
+          dateFormat.format(workout.date),
+        ),
+        trailing: ShowNotesButton(entry.notes, entry.exercise.name));
   }
 }

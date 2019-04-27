@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'buttons.dart';
 import 'exercise.dart';
 import 'exercise_picker.dart';
 import 'workout.dart';
@@ -49,15 +50,20 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
               MaterialPageRoute(
                   builder: (context) => WorkoutEntryWidget(workoutEntry)));
         },
-        trailing: IconButton(
-            icon: Icon(Icons.delete),
-            tooltip: 'Delete entry',
-            onPressed: () async {
-              var future = _workout.removeEntry(workoutEntry);
-              setState(() {});
-              await future;
-              setState(() {});
-            }));
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+          ShowNotesButton(workoutEntry.notes, workoutEntry.exercise.name),
+          IconButton(
+              icon: Icon(Icons.delete),
+              tooltip: 'Delete entry',
+              onPressed: () async {
+                if (await showDeleteDialog(context, title: 'Delete entry?')) {
+                  var future = _workout.removeEntry(workoutEntry);
+                  setState(() {});
+                  await future;
+                  setState(() {});
+                }
+              })
+        ]));
   }
 
   Future<void> _handleReorder(int oldIndex, int newIndex) async {
@@ -69,7 +75,7 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(DateFormat("EEEE, MMMM d").format(_workout.date)),
+        title: Text(dateFormat.format(_workout.date)),
         actions: <Widget>[
           IconButton(
               icon: Icon(Icons.delete),
@@ -176,26 +182,7 @@ class WorkoutWidgetState extends State<WorkoutWidget> {
   }
 
   Future<void> _handleDelete() async {
-    bool confirmed = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              title: const Text('Delete workout?'),
-              actions: <Widget>[
-                FlatButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    }),
-                FlatButton(
-                    child: const Text('Delete'),
-                    onPressed: () {
-                      Navigator.of(context).pop(true);
-                    })
-              ]);
-        });
-    if (confirmed) {
+    if (await showDeleteDialog(context, title: 'Delete workout?')) {
       await _workout.delete();
       Navigator.pop(context);
     }

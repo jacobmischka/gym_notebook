@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'utils.dart';
+
 class Exercise {
   String id;
   DocumentReference reference;
@@ -44,9 +46,8 @@ class ExerciseSet {
   }
 
   ExerciseSet.fromMap(Map<String, dynamic> map) {
-    WeightUnit weightUnit =
-        map['weight']['units'] == 'kg' ? WeightUnit.kg : WeightUnit.lbs;
-    weight = ExerciseWeight(map['weight']['weight'], weightUnit);
+    weight = ExerciseWeight(
+        map['weight']['weight'], unitsFromString(map['weight']['units']));
     reps = map['reps'];
   }
 
